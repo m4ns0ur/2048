@@ -8,8 +8,11 @@ Build the source code, and execute:
 $ go build
 $ ./2048
 ```
-## Open Source Licences
+## Open Source Licenses
 - [termbox-go](https://github.com/nsf/termbox-go/blob/master/LICENSE)
+
+## License
+[MIT](LICENSE)
 
 ## Game in Action
 [![asciicast](https://asciinema.org/a/85259.png)](https://asciinema.org/a/85259)
