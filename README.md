@@ -2,6 +2,12 @@
 Yet another simple implementation of [Game 2048](https://gabrielecirulli.github.io/2048/) in Go lang
 
 ## Usage
+Get the required lib:
+
+```
+$ go get -u github.com/nsf/termbox-go
+```
+
 Build the source code, and execute:
 
 ```
