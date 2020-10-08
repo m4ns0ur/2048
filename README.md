@@ -1,19 +1,17 @@
 # Game 2048
 Yet another simple implementation of [Game 2048](https://gabrielecirulli.github.io/2048/) in Go lang
 
+## Install
+```
+$ GO111MODULE=on go get github.com/m4ns0ur/
+```
+
 ## Usage
-Get the required lib:
 
 ```
-$ go get -u github.com/nsf/termbox-go
+$ 2048
 ```
 
-Build the source code, and execute:
-
-```
-$ go build
-$ ./2048
-```
 ## Open Source Licenses
 - [termbox-go](https://github.com/nsf/termbox-go/blob/master/LICENSE)
 
