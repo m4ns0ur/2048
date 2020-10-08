@@ -13,6 +13,7 @@ import (
 const boardLen = 4
 
 var boardStartY = 0
+var boardStartX = 0
 var gameFieldEndY = 0
 
 func main() {
@@ -23,6 +24,9 @@ func main() {
 	termbox.SetOutputMode(termbox.OutputNormal)
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 	termbox.Sync()
+	maxX, maxY := termbox.Size()
+	boardStartY = maxY/2 - 8
+	boardStartX = maxX/2 - 12
 	board := initBoard(boardLen)
 	drawGameField(board)
 	startGame(board)
@@ -31,9 +35,9 @@ func main() {
 func drawGameField(board [][]int) {
 	putNextNumber(board)
 	putNextNumber(board)
-	boardStartY = printTerminal(0, 0, []string{"Game 2048", ""})
-	boardEndY := drawBoard(0, boardStartY, board)
-	gameFieldEndY = printTerminal(0, boardEndY, []string{"Esc ←↑↓→", ""})
+	boardStartY = printTerminal(boardStartX, boardStartY, []string{"        Game 2048", "", "   +-------------------+", ""})
+	boardEndY := drawBoard(boardStartX, boardStartY, board)
+	gameFieldEndY = printTerminal(boardStartX, boardEndY, []string{"   +-------------------+", "", "Esc    ← ↑ ↓ →"})
 }
 
 func initBoard(len int) [][]int {
@@ -48,14 +52,16 @@ func drawBoard(startX, startY int, board [][]int) int {
 	strs := []string{}
 	for _, row := range board {
 		var str string
+		str += "  |"
 		for _, cell := range row {
 			str += fmt.Sprintf("%4d", cell)
 		}
+		str += "   |"
 		str = strings.Replace(str, "0", ".", -1)
 		strs = append(strs, str, "")
 	}
 
-	printTerminal(0, boardStartY, strs)
+	printTerminal(boardStartX+1, boardStartY, strs)
 	termbox.Flush()
 	return startY + len(strs)
 }
@@ -125,7 +131,11 @@ loop:
 			}
 		case termbox.EventResize:
 			if !end {
-				drawBoard(0, boardStartY, board)
+				termbox.Sync()
+				maxX, maxY := termbox.Size()
+				boardStartY = maxY/2 - 4
+				boardStartX = maxX/2 - 5
+				drawBoard(boardStartX, boardStartY, board)
 			}
 		case termbox.EventError:
 			panicError(event.Err)
@@ -140,7 +150,7 @@ func checkAndRefreshBoard(board [][]int) (end bool) {
 	if putNextNumber(board) {
 		return true
 	}
-	drawBoard(0, boardStartY, board)
+	drawBoard(boardStartX, boardStartY, board)
 	return false
 }
 
@@ -181,14 +191,14 @@ func checkWinner(board [][]int) (winner bool) {
 }
 
 func gameOver() {
-	printTerminal(0, gameFieldEndY, []string{"Game Over!"})
-	termbox.SetCursor(0, gameFieldEndY+1)
+	printTerminal(boardStartX, gameFieldEndY, []string{"Game Over!"})
+	termbox.SetCursor(boardStartX, gameFieldEndY+1)
 	termbox.Flush()
 }
 
 func gameWin() {
-	printTerminal(0, gameFieldEndY, []string{"You Won!"})
-	termbox.SetCursor(0, gameFieldEndY+1)
+	printTerminal(boardStartX, gameFieldEndY, []string{"You Won!"})
+	termbox.SetCursor(boardStartX, gameFieldEndY+1)
 	termbox.Flush()
 }
 
