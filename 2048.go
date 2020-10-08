@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
-	"os"
 	"strings"
 	"time"
 
@@ -17,10 +17,12 @@ var gameFieldEndY = 0
 
 func main() {
 	err := termbox.Init()
-	checkError(err)
+	panicError(err)
 	defer termbox.Close()
 
+	termbox.SetOutputMode(termbox.OutputNormal)
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+	termbox.Sync()
 	board := initBoard(boardLen)
 	drawGameField(board)
 	startGame(board)
@@ -58,15 +60,17 @@ func drawBoard(startX, startY int, board [][]int) int {
 	return startY + len(strs)
 }
 
-func putNextNumber(board [][]int) {
+func putNextNumber(board [][]int) (loser bool) {
 	emptyCells := findEmtpyCells(board)
 	if len(emptyCells) <= 0 {
 		gameOver()
+		return true
 	}
 	rndSrc := rand.NewSource(time.Now().UnixNano())
 	rnd := rand.New(rndSrc)
 	emptyCell := emptyCells[rnd.Intn(len(emptyCells))]
 	board[emptyCell/len(board)][emptyCell%len(board)] = 2
+	return false
 }
 
 func findEmtpyCells(board [][]int) []int {
@@ -82,46 +86,62 @@ func findEmtpyCells(board [][]int) []int {
 }
 
 func startGame(board [][]int) {
+	end := false
+loop:
 	for {
-		event := termbox.PollEvent()
-		if event.Type == termbox.EventError {
-			checkError(event.Err)
-		}
-		if event.Type == termbox.EventKey {
+		switch event := termbox.PollEvent(); event.Type {
+		case termbox.EventKey:
 			switch event.Key {
-			case termbox.KeyEsc:
-				termbox.SetCursor(0, gameFieldEndY)
-				termbox.Flush()
-				os.Exit(0)
+			case termbox.KeyEsc, termbox.KeyCtrlC:
+				break loop
 			case termbox.KeyArrowDown:
-				board = rotateBoard(board, false)
-				board = slideLeft(board)
-				board = rotateBoard(board, true)
-				checkAndRefreshBoard(board)
+				if !end {
+					board = rotateBoard(board, false)
+					board = slideLeft(board)
+					board = rotateBoard(board, true)
+					end = checkAndRefreshBoard(board)
+				}
 			case termbox.KeyArrowLeft:
-				board = slideLeft(board)
-				checkAndRefreshBoard(board)
+				if !end {
+					board = slideLeft(board)
+					end = checkAndRefreshBoard(board)
+				}
 			case termbox.KeyArrowRight:
-				board = rotateBoard(board, true)
-				board = rotateBoard(board, true)
-				board = slideLeft(board)
-				board = rotateBoard(board, false)
-				board = rotateBoard(board, false)
-				checkAndRefreshBoard(board)
+				if !end {
+					board = rotateBoard(board, true)
+					board = rotateBoard(board, true)
+					board = slideLeft(board)
+					board = rotateBoard(board, false)
+					board = rotateBoard(board, false)
+					end = checkAndRefreshBoard(board)
+				}
 			case termbox.KeyArrowUp:
-				board = rotateBoard(board, true)
-				board = slideLeft(board)
-				board = rotateBoard(board, false)
-				checkAndRefreshBoard(board)
+				if !end {
+					board = rotateBoard(board, true)
+					board = slideLeft(board)
+					board = rotateBoard(board, false)
+					end = checkAndRefreshBoard(board)
+				}
 			}
+		case termbox.EventResize:
+			if !end {
+				drawBoard(0, boardStartY, board)
+			}
+		case termbox.EventError:
+			panicError(event.Err)
 		}
 	}
 }
 
-func checkAndRefreshBoard(board [][]int) {
-	checkWinner(board)
-	putNextNumber(board)
+func checkAndRefreshBoard(board [][]int) (end bool) {
+	if checkWinner(board) {
+		return true
+	}
+	if putNextNumber(board) {
+		return true
+	}
 	drawBoard(0, boardStartY, board)
+	return false
 }
 
 func slideLeft(board [][]int) [][]int {
@@ -148,33 +168,33 @@ func slideLeft(board [][]int) [][]int {
 	return board
 }
 
-func checkWinner(board [][]int) {
+func checkWinner(board [][]int) (winner bool) {
 	for _, row := range board {
 		for _, cell := range row {
 			if cell == 2048 {
 				gameWin()
+				return true
 			}
 		}
 	}
+	return false
 }
 
 func gameOver() {
 	printTerminal(0, gameFieldEndY, []string{"Game Over!"})
 	termbox.SetCursor(0, gameFieldEndY+1)
 	termbox.Flush()
-	os.Exit(0)
 }
 
 func gameWin() {
 	printTerminal(0, gameFieldEndY, []string{"You Won!"})
 	termbox.SetCursor(0, gameFieldEndY+1)
 	termbox.Flush()
-	os.Exit(0)
 }
 
-func checkError(err error) {
+func panicError(err error) {
 	if err != nil {
-		panic(err)
+		log.Panicln(err)
 	}
 }
 
